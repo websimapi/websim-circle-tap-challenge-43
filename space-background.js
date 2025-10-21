@@ -2,9 +2,11 @@ import * as THREE from 'three';
 
 export class SpaceBackground {
     constructor() {
-        this.container = document.createElement('div');
-        this.container.id = 'space-background';
-        document.body.insertBefore(this.container, document.body.firstChild);
+        this.container = document.getElementById('space-background');
+        if (!this.container) {
+            console.error('Space background container not found!');
+            return;
+        }
 
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);

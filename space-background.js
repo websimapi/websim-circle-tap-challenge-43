@@ -19,6 +19,7 @@ export class SpaceBackground {
         // Create starfield
         this.createStars();
         this.createDistantStars();
+        this.createStarDust();
 
         // Animation
         this.animate = this.animate.bind(this);
@@ -30,11 +31,13 @@ export class SpaceBackground {
 
     createStars() {
         const starGeometry = new THREE.BufferGeometry();
-        const starCount = 1500;
+        const starCount = 10000;
 
         const positions = new Float32Array(starCount * 3);
         const velocities = new Float32Array(starCount);
         const sizes = new Float32Array(starCount);
+        const colors = new Float32Array(starCount * 3);
+        const color = new THREE.Color();
 
         for (let i = 0; i < starCount; i++) {
             const i3 = i * 3;
@@ -49,17 +52,28 @@ export class SpaceBackground {
 
             // Random size
             sizes[i] = Math.random() * 2 + 0.5;
+            
+            // Random color
+            if (Math.random() > 0.95) { // A few yellow/red stars
+                 color.setHSL(Math.random() * 0.1 + 0.05, 0.9, 0.7);
+            } else { // Mostly blue/white stars
+                 color.setHSL(Math.random() * 0.1 + 0.55, 0.8, 0.8);
+            }
+            colors[i3] = color.r;
+            colors[i3 + 1] = color.g;
+            colors[i3 + 2] = color.b;
         }
 
         starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         starGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const starMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
             size: 0.1,
             sizeAttenuation: true,
             transparent: true,
             opacity: 0.8,
+            vertexColors: true,
             blending: THREE.AdditiveBlending
         });
 
@@ -70,7 +84,7 @@ export class SpaceBackground {
 
     createDistantStars() {
         const distantGeometry = new THREE.BufferGeometry();
-        const distantCount = 800;
+        const distantCount = 10000;
 
         const positions = new Float32Array(distantCount * 3);
         const colors = new Float32Array(distantCount * 3);
@@ -79,7 +93,7 @@ export class SpaceBackground {
             const i3 = i * 3;
 
             // Spread out more
-            const radius = 80 + Math.random() * 40;
+            const radius = 150 + Math.random() * 100;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.random() * Math.PI;
 
@@ -98,7 +112,7 @@ export class SpaceBackground {
         distantGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const distantMaterial = new THREE.PointsMaterial({
-            size: 0.05,
+            size: 0.03,
             vertexColors: true,
             transparent: true,
             opacity: 0.4,
@@ -107,6 +121,41 @@ export class SpaceBackground {
 
         this.distantStars = new THREE.Points(distantGeometry, distantMaterial);
         this.scene.add(this.distantStars);
+    }
+    
+    createStarDust() {
+        const dustGeometry = new THREE.BufferGeometry();
+        const dustCount = 20000;
+        const positions = new Float32Array(dustCount * 3);
+        const color = new THREE.Color("#4a4a6a"); // Nebula-like color
+        const colors = new Float32Array(dustCount * 3);
+
+        for (let i = 0; i < dustCount; i++) {
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * 50;
+            positions[i3 + 1] = (Math.random() - 0.5) * 50;
+            positions[i3 + 2] = (Math.random() - 0.5) * 50;
+            
+            const intensity = 0.5 + Math.random() * 0.5;
+            colors[i3] = color.r * intensity;
+            colors[i3 + 1] = color.g * intensity;
+            colors[i3 + 2] = color.b * intensity;
+        }
+
+        dustGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        dustGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
+        const dustMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.2,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+        });
+
+        this.starDust = new THREE.Points(dustGeometry, dustMaterial);
+        this.scene.add(this.starDust);
     }
 
     animate() {
@@ -134,6 +183,10 @@ export class SpaceBackground {
         // Rotate distant stars slowly
         this.distantStars.rotation.y += 0.0001;
         this.distantStars.rotation.x += 0.00005;
+
+        // Rotate dust cloud slowly
+        this.starDust.rotation.y += 0.0002;
+        this.starDust.rotation.z += 0.0001;
 
         this.renderer.render(this.scene, this.camera);
     }
